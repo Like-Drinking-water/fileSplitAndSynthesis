@@ -5,6 +5,7 @@
 
 #define FILE_PATH_LENGTH 200
 #define SPLIT_FILE_SIZE 103809024
+#define BUFFER_SIZE 11264 
 #define TRUE 1
 #define FALSE 0
 
@@ -159,15 +160,17 @@ int getBasePath(char filePath[], char fileBasePath[], int *isBase) {
 }
 
 int main(void) {
-	//用来临时存放数据
-	char tmp;
-	long j; 
+	//用来标志要传输多少次 
+	long j, time; 
+	//每次读到多少 
+	size_t read;
 	//判断是否是输入相对路径 
 	int isBase;
 	int status, i, pathLastIndex;
 	FILE *fileBase, *fileSplit;
 	//用来保存文件的路径和文件的基础路径
-	char filePath[FILE_PATH_LENGTH], fileBasePath[FILE_PATH_LENGTH], fileSplitDir[FILE_PATH_LENGTH], splitFilePath[FILE_PATH_LENGTH];
+	char filePath[FILE_PATH_LENGTH], fileBasePath[FILE_PATH_LENGTH], fileSplitDir[FILE_PATH_LENGTH], splitFilePath[FILE_PATH_LENGTH],
+	buffer[BUFFER_SIZE];
 	author(); 
 	printf("请输入要拆分的文件的地址:");
 	scanf("%s",filePath);
@@ -209,6 +212,7 @@ int main(void) {
 	//读取文件
 	j = 0;
 	i = 0;
+	time = SPLIT_FILE_SIZE / BUFFER_SIZE;
 	while (!(feof(fileBase))) {
 		fileSplit = fopen(splitFilePath, "wb+");
 		//判断是否成功打开文件
@@ -218,9 +222,9 @@ int main(void) {
 			return 0;
 		}
 		//从文件中读取 99M 到拆分文件 当读取到 99M 或文件读取完成停止操作 
-		while (j < SPLIT_FILE_SIZE && !(feof(fileBase))) {
-			tmp = fgetc(fileBase);
-			fputc(tmp, fileSplit);
+		while (j < time && !(feof(fileBase))) {
+			read = fread(buffer, BUFFER_SIZE, 1, fileBase);
+			fwrite(buffer, read * BUFFER_SIZE, 1, fileSplit);
 			j++;
 		}
 		j = 0;

@@ -1,6 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+#define BUFFER_SIZE 11264 
+
 /**
 * 打印作者信息 
 */
@@ -23,9 +25,11 @@ void splitFileName(char splitFile[], int i) {
 
 int main(void) {
 	FILE *name, *result, *split;
+	//每次读到多少 
+	size_t read;
 	char tmp;
 	int i = 0;
-	char resultFile[20], splitFile[10];
+	char resultFile[20], splitFile[10], buffer[BUFFER_SIZE];
 	author();
 	printf("正在合成请勿关闭......\n");
 	//创建最终合成的文件
@@ -67,8 +71,8 @@ int main(void) {
 		}
 		while (!(feof(split)))
 		{
-			tmp = fgetc(split);
-			fputc(tmp, result);	
+			read = fread(buffer, BUFFER_SIZE, 1, split);
+			fwrite(buffer, read * BUFFER_SIZE, 1, result);	
 		}
 		//读取完成后关闭并删除文件 
 		fclose(split);
