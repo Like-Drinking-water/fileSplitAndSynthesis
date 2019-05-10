@@ -27,7 +27,7 @@ int main(void) {
 	int i = 0;
 	char resultFile[20], splitFile[10];
 	author();
-	printf("正在合成请勿关闭......");
+	printf("正在合成请勿关闭......\n");
 	//创建最终合成的文件
 	name = fopen("name.chl", "rb");
 	if (name == NULL) {

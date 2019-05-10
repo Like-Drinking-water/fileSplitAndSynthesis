@@ -5,6 +5,8 @@
 
 #define FILE_PATH_LENGTH 200
 #define SPLIT_FILE_SIZE 103809024
+#define TRUE 1
+#define FALSE 0
 
 /**
 * 打印作者信息 
@@ -32,24 +34,33 @@ void copyString(char source[], char another[], int size) {
 * @Param filePath[] 拆分的文件的路径
 * @Param fileSplitDir[] 拆分文件存放的路径
 * @Param pathLastIndex 用来标志基础路径的最后下标 
+* @Param isBase 用来判断是不是最短相对路径 
 */
-void sourceFileName(char filePath[], char fileSplitDir[], int pathLastIndex) {
+void sourceFileName(char filePath[], char fileSplitDir[], int pathLastIndex, int *isBase) {
 	FILE *theName;
 	int i = 0;
 	int j = 0;
 	int last;
 	char splitFilePath[FILE_PATH_LENGTH];
 	copyString(fileSplitDir, splitFilePath, pathLastIndex + 4);
-	//找到字符串结尾
-	while (filePath[i] != '\0') {
-		i++;
+	//如果是最短相对路径 
+	if (*isBase) {
+		i = 0;
+		j = -1; 
+	} 
+	else {
+		copyString(fileSplitDir, splitFilePath, pathLastIndex + 4);
+		//找到字符串结尾
+		while (filePath[i] != '\0') {
+			i++;
+		}
+		last = i;
+		//找到最后一个路径分隔符的下标
+		while (filePath[i] != '\\' && filePath[i] != '/') {
+			i--;
+		}
+		last -= i;
 	}
-	last = i;
-	//找到最后一个路径分隔符的下标
-	while (filePath[i] != '\\' && filePath[i] != '/') {
-		i--;
-	}
-	last -= i;
 	//给存放文件名称的文件命名 
 	splitFilePath[pathLastIndex + 5] = '/';
 	splitFilePath[pathLastIndex + 6] = 'n';
@@ -63,7 +74,7 @@ void sourceFileName(char filePath[], char fileSplitDir[], int pathLastIndex) {
 	splitFilePath[pathLastIndex + 14] = '\0';
 	theName = fopen(splitFilePath, "wb+");
 	if (theName == NULL) {
-		printf("Can not open the file!\n");
+		printf("Can not open the file!!!\n");
 		system("pause");
 		return;
 	}
@@ -97,10 +108,14 @@ void splitFileName(char splitFilePath[], int start, int i) {
 * @Param fileBasePath[] 文件的基础路径
 * @Param fileSplitDir[] 拆分文件保存的文件夹
 * @Param size 文件的基础路径的大小
+* @Param isBase 用来判断是不是最短相对路径 
 * @Return 0 表示成功
 */
-int createSplitDir(char fileBasePath[], char fileSplitDir[], int size) {
-	copyString(fileBasePath, fileSplitDir, size);
+int createSplitDir(char fileBasePath[], char fileSplitDir[], int size, int *isBase) {
+	//判断是否是最短相对路径 不是则拷贝基础路径 
+	if (!(*isBase)) {
+		copyString(fileBasePath, fileSplitDir, size);
+	} 
 	fileSplitDir[size + 1] = 's';
 	fileSplitDir[size + 2] = 'p';
 	fileSplitDir[size + 3] = 'l';
@@ -114,20 +129,31 @@ int createSplitDir(char fileBasePath[], char fileSplitDir[], int size) {
 * 获取文件的基础路径
 * @Param filePath[] 文件的路径字符串
 * @Param fileBasePath[] 文件的基础路径字符串
+* @Param isBase 用来判断是不是最短相对路径 
 * @Return 返回基础路径字符串结尾标志的下标
 */
-int getBasePath(char filePath[], char fileBasePath[]) {
+int getBasePath(char filePath[], char fileBasePath[], int *isBase) {
 	int i = 0;
+	*isBase = TRUE;
 	//找到字符串结尾
 	while (filePath[i] != '\0') {
 		i++;
+		if (filePath[i] == '\\' || filePath[i] == '/') {
+			*isBase = FALSE;
+		}
 	}
-	//找到最后一个路径分隔符的下标
-	while (filePath[i] != '\\' && filePath[i] != '/') {
-		i--;
+	//如果不是相对最短路径 
+	if (!(*isBase)) {
+		//找到最后一个路径分隔符的下标
+		while (filePath[i] != '\\' && filePath[i] != '/') {
+			i--;
+		}
+		//将最后一个路径分隔符前的内容赋值给基础路径
+		copyString(filePath, fileBasePath, i);
 	}
-	//将最后一个路径分隔符前的内容赋值给基础路径
-	copyString(filePath, fileBasePath, i);
+	else {
+		i = -1;
+	}
 	
 	return (i + 1);
 }
@@ -135,17 +161,20 @@ int getBasePath(char filePath[], char fileBasePath[]) {
 int main(void) {
 	//用来临时存放数据
 	char tmp;
-	int status, i, j, pathLastIndex;
+	long j; 
+	//判断是否是输入相对路径 
+	int isBase;
+	int status, i, pathLastIndex;
 	FILE *fileBase, *fileSplit;
 	//用来保存文件的路径和文件的基础路径
 	char filePath[FILE_PATH_LENGTH], fileBasePath[FILE_PATH_LENGTH], fileSplitDir[FILE_PATH_LENGTH], splitFilePath[FILE_PATH_LENGTH];
 	author(); 
 	printf("请输入要拆分的文件的地址:");
 	scanf("%s",filePath);
-	printf("正在拆分请勿关闭......");
+	printf("正在拆分请勿关闭......\n");
 	
 	//获取文件的基础路径并记录下字符串的最后下标
-	pathLastIndex = getBasePath(filePath, fileBasePath);
+	pathLastIndex = getBasePath(filePath, fileBasePath, &isBase);
 	
 	fileBase = fopen(filePath, "rb");  
 	//判断是否成功打开文件
@@ -156,14 +185,14 @@ int main(void) {
 	}
 	
 	//在要拆分的文件的路径下创建一个名为 split 的文件夹
-	status = createSplitDir(fileBasePath, fileSplitDir, pathLastIndex - 1);
+	status = createSplitDir(fileBasePath, fileSplitDir, pathLastIndex - 1, &isBase);
 	//无法创建文件夹
 	if (status) {
 		printf("Can not create dir\n");
 		system("pause");
 		return 0;
 	}
-	sourceFileName(filePath, fileSplitDir, pathLastIndex);
+	sourceFileName(filePath, fileSplitDir, pathLastIndex, &isBase);
 	//拷贝文件夹的路径
 	copyString(fileSplitDir, splitFilePath, pathLastIndex + 4);
 	splitFilePath[pathLastIndex + 5] = '/';
