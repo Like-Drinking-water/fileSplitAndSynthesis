@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-#define BUFFER_SIZE 11264 
+#define BUFFER_SIZE 1024 
 
 /**
 * 打印作者信息 

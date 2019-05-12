@@ -5,7 +5,7 @@
 
 #define FILE_PATH_LENGTH 200
 #define SPLIT_FILE_SIZE 103809024
-#define BUFFER_SIZE 11264 
+#define BUFFER_SIZE 1024 
 #define TRUE 1
 #define FALSE 0
 
@@ -227,6 +227,8 @@ int main(void) {
 			fwrite(buffer, read * BUFFER_SIZE, 1, fileSplit);
 			j++;
 		}
+		//给文件结尾标志 
+		fputc(EOF, fileSplit); 
 		j = 0;
 		//关闭一个拆分文件 
 		fclose(fileSplit);
